@@ -1,7 +1,9 @@
 import Product from "../models/Product.js";
 import ProductVariant from "../models/ProductVariant.js";
+import { validateObjectId } from "../utils/securityUtils.js";
 
 const verifyProductOwnership = async (productId, sellerId) => {
+    validateObjectId(productId, "productId");
     const product = await Product.findOne({
         _id: productId,
         sellerId
@@ -31,6 +33,12 @@ export const createVariantService = async (
         price,
         images
     } = data;
+
+    if (price === undefined || typeof price !== "number" || isNaN(price) || price < 0) {
+        const error = new Error("price must be a valid non-negative number");
+        error.statusCode = 400;
+        throw error;
+    }
 
     const existingVariant = await ProductVariant.findOne({
         sku
@@ -71,7 +79,17 @@ export const updateVariantService = async (
     sellerId,
     data
 ) => {
+    validateObjectId(variantId, "variantId");
     await verifyProductOwnership(productId, sellerId);
+
+    if (
+        data.price !== undefined &&
+        (typeof data.price !== "number" || isNaN(data.price) || data.price < 0)
+    ) {
+        const error = new Error("price must be a valid non-negative number");
+        error.statusCode = 400;
+        throw error;
+    }
 
     const variant = await ProductVariant.findOne({
         _id: variantId,
@@ -107,6 +125,7 @@ export const deleteVariantService = async (
     variantId,
     sellerId
 ) => {
+    validateObjectId(variantId, "variantId");
     await verifyProductOwnership(productId, sellerId);
 
     const variant = await ProductVariant.findOne({

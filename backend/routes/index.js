@@ -17,6 +17,7 @@ import supportRoutes from "./supportRoutes.js";
 import settlementRoutes from "./settlementRoutes.js";
 import notificationRoutes from "./notificationRoutes.js";
 import couponRoutes from "./couponRoutes.js";
+import aiRoutes from "./aiRoutes.js";
 
 const router = express.Router();
 
@@ -43,6 +44,7 @@ router.use("/support", supportRoutes);
 router.use("/settlements", settlementRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/coupons", couponRoutes);
+router.use("/ai", aiRoutes);
 router.use("/", variantRoutes);
 router.use("/", inventoryRoutes);
 

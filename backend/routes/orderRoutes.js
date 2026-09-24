@@ -13,6 +13,7 @@ import {
     protect,
     authorize
 } from "../middleware/authMiddleware.js";
+import { approvedSeller } from "../middleware/sellerMiddleware.js";
 
 const router = express.Router();
 

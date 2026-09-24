@@ -13,10 +13,32 @@ export const protect = (req, res, next) => {
 
         const token = authHeader.split(" ")[1];
 
+        if (!token || token.trim() === "" || token === "null" || token === "undefined") {
+            return res.status(401).json({
+                success: false,
+                message: "Authentication required"
+            });
+        }
+
+        if (!process.env.JWT_SECRET) {
+            console.error("CRITICAL: JWT_SECRET environment variable is missing.");
+            return res.status(500).json({
+                success: false,
+                message: "Authentication service temporarily unavailable"
+            });
+        }
+
         const decoded = jwt.verify(
             token,
             process.env.JWT_SECRET
         );
+
+        if (!decoded || !decoded.userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid token payload"
+            });
+        }
 
         req.user = decoded;
 

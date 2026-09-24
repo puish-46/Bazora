@@ -1,10 +1,12 @@
 import Coupon from "../models/Coupon.js";
+import { createAuditLog } from "./auditLogService.js";
+import { validateObjectId } from "../utils/securityUtils.js";
 
 // ==========================================
 // CREATE COUPON
 // ==========================================
 
-export const createCouponService = async (couponData) => {
+export const createCouponService = async (couponData, adminId = null) => {
     const {
         code,
         description,
@@ -31,6 +33,18 @@ export const createCouponService = async (couponData) => {
         throw error;
     }
 
+    if (!["percentage", "fixed"].includes(discountType)) {
+        const error = new Error("Invalid discountType. Must be 'percentage' or 'fixed'");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if (typeof discountValue !== "number" || isNaN(discountValue) || discountValue < 0) {
+        const error = new Error("discountValue must be a valid non-negative number");
+        error.statusCode = 400;
+        throw error;
+    }
+
     if (
         discountType === "percentage" &&
         discountValue > 100
@@ -38,6 +52,33 @@ export const createCouponService = async (couponData) => {
         const error = new Error(
             "Percentage discount cannot exceed 100"
         );
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if (
+        minimumOrderAmount !== undefined &&
+        (typeof minimumOrderAmount !== "number" || isNaN(minimumOrderAmount) || minimumOrderAmount < 0)
+    ) {
+        const error = new Error("minimumOrderAmount must be a non-negative number");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if (
+        maximumDiscountAmount !== undefined &&
+        (typeof maximumDiscountAmount !== "number" || isNaN(maximumDiscountAmount) || maximumDiscountAmount < 0)
+    ) {
+        const error = new Error("maximumDiscountAmount must be a non-negative number");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if (
+        usageLimit !== undefined &&
+        (typeof usageLimit !== "number" || isNaN(usageLimit) || usageLimit < 1 || !Number.isInteger(usageLimit))
+    ) {
+        const error = new Error("usageLimit must be a positive integer");
         error.statusCode = 400;
         throw error;
     }
@@ -64,7 +105,7 @@ export const createCouponService = async (couponData) => {
         throw error;
     }
 
-    return await Coupon.create({
+    const coupon = await Coupon.create({
         code,
         description,
         discountType,
@@ -75,6 +116,20 @@ export const createCouponService = async (couponData) => {
         startDate,
         expiryDate
     });
+
+    await createAuditLog({
+        userId: adminId,
+        action: "COUPON_CREATED",
+        resourceType: "Coupon",
+        resourceId: coupon._id,
+        details: {
+            code: coupon.code,
+            discountType: coupon.discountType,
+            discountValue: coupon.discountValue
+        }
+    });
+
+    return coupon;
 };
 
 
@@ -93,6 +148,7 @@ export const getAllCouponsService = async () => {
 // ==========================================
 
 export const getCouponByIdService = async (couponId) => {
+    validateObjectId(couponId, "couponId");
     const coupon = await Coupon.findById(couponId);
 
     if (!coupon) {
@@ -111,8 +167,10 @@ export const getCouponByIdService = async (couponId) => {
 
 export const updateCouponService = async (
     couponId,
-    updateData
+    updateData,
+    adminId = null
 ) => {
+    validateObjectId(couponId, "couponId");
     const coupon = await Coupon.findById(couponId);
 
     if (!coupon) {
@@ -122,12 +180,57 @@ export const updateCouponService = async (
     }
 
     if (
-        updateData.discountType === "percentage" &&
-        updateData.discountValue > 100
+        updateData.discountType !== undefined &&
+        !["percentage", "fixed"].includes(updateData.discountType)
     ) {
+        const error = new Error("Invalid discountType. Must be 'percentage' or 'fixed'");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if (
+        updateData.discountValue !== undefined &&
+        (typeof updateData.discountValue !== "number" || isNaN(updateData.discountValue) || updateData.discountValue < 0)
+    ) {
+        const error = new Error("discountValue must be a valid non-negative number");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const effectiveType = updateData.discountType || coupon.discountType;
+    const effectiveValue = updateData.discountValue !== undefined ? updateData.discountValue : coupon.discountValue;
+
+    if (effectiveType === "percentage" && effectiveValue > 100) {
         const error = new Error(
             "Percentage discount cannot exceed 100"
         );
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if (
+        updateData.minimumOrderAmount !== undefined &&
+        (typeof updateData.minimumOrderAmount !== "number" || isNaN(updateData.minimumOrderAmount) || updateData.minimumOrderAmount < 0)
+    ) {
+        const error = new Error("minimumOrderAmount must be a non-negative number");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if (
+        updateData.maximumDiscountAmount !== undefined &&
+        (typeof updateData.maximumDiscountAmount !== "number" || isNaN(updateData.maximumDiscountAmount) || updateData.maximumDiscountAmount < 0)
+    ) {
+        const error = new Error("maximumDiscountAmount must be a non-negative number");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if (
+        updateData.usageLimit !== undefined &&
+        (typeof updateData.usageLimit !== "number" || isNaN(updateData.usageLimit) || updateData.usageLimit < 1 || !Number.isInteger(updateData.usageLimit))
+    ) {
+        const error = new Error("usageLimit must be a positive integer");
         error.statusCode = 400;
         throw error;
     }
@@ -164,9 +267,40 @@ export const updateCouponService = async (
         }
     }
 
-    Object.assign(coupon, updateData);
+    // Mass assignment prevention: only allow updating approved fields
+    const allowedFields = [
+        "code",
+        "description",
+        "discountType",
+        "discountValue",
+        "minimumOrderAmount",
+        "maximumDiscountAmount",
+        "usageLimit",
+        "startDate",
+        "expiryDate",
+        "isActive"
+    ];
 
-    return await coupon.save();
+    for (const field of allowedFields) {
+        if (updateData[field] !== undefined) {
+            coupon[field] = updateData[field];
+        }
+    }
+
+    const updatedCoupon = await coupon.save();
+
+    await createAuditLog({
+        userId: adminId,
+        action: "COUPON_UPDATED",
+        resourceType: "Coupon",
+        resourceId: updatedCoupon._id,
+        details: {
+            code: updatedCoupon.code,
+            updatedFields: Object.keys(updateData)
+        }
+    });
+
+    return updatedCoupon;
 };
 
 
@@ -174,7 +308,8 @@ export const updateCouponService = async (
 // DELETE COUPON
 // ==========================================
 
-export const deleteCouponService = async (couponId) => {
+export const deleteCouponService = async (couponId, adminId = null) => {
+    validateObjectId(couponId, "couponId");
     const coupon = await Coupon.findById(couponId);
 
     if (!coupon) {
@@ -184,6 +319,16 @@ export const deleteCouponService = async (couponId) => {
     }
 
     await coupon.deleteOne();
+
+    await createAuditLog({
+        userId: adminId,
+        action: "COUPON_DELETED",
+        resourceType: "Coupon",
+        resourceId: coupon._id,
+        details: {
+            code: coupon.code
+        }
+    });
 
     return {
         message: "Coupon deleted successfully"
@@ -196,8 +341,10 @@ export const deleteCouponService = async (couponId) => {
 // ==========================================
 
 export const toggleCouponStatusService = async (
-    couponId
+    couponId,
+    adminId = null
 ) => {
+    validateObjectId(couponId, "couponId");
     const coupon = await Coupon.findById(couponId);
 
     if (!coupon) {
@@ -209,6 +356,17 @@ export const toggleCouponStatusService = async (
     coupon.isActive = !coupon.isActive;
 
     await coupon.save();
+
+    await createAuditLog({
+        userId: adminId,
+        action: "COUPON_STATUS_CHANGED",
+        resourceType: "Coupon",
+        resourceId: coupon._id,
+        details: {
+            code: coupon.code,
+            isActive: coupon.isActive
+        }
+    });
 
     return coupon;
 };

@@ -32,6 +32,11 @@ const userSchema = new mongoose.Schema(
                 "delivery"
             ],
             default: "customer"
+        },
+
+        isActive: {
+            type: Boolean,
+            default: true
         }
     },
     {

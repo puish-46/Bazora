@@ -4,12 +4,30 @@ import Order from "../models/Order.js";
 import Inventory from "../models/Inventory.js";
 import { createNotificationService } from "./notificationService.js";
 import { notificationTemplates } from "../utils/notificationTemplates.js";
+import { validateObjectId } from "../utils/securityUtils.js";
 
 export const createReturnRequestService = async (
     userId,
     orderId,
     reason
 ) => {
+    validateObjectId(userId, "userId");
+    validateObjectId(orderId, "orderId");
+
+    if (!reason || typeof reason !== "string" || reason.trim().length === 0) {
+        const error = new Error("Return reason is required");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if (reason.trim().length > 500) {
+        const error = new Error("Return reason cannot exceed 500 characters");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const trimmedReason = reason.trim();
+
     const order = await Order.findOne({
         _id: orderId,
         userId
@@ -102,6 +120,7 @@ export const createReturnRequestService = async (
 };
 
 export const getMyReturnsService = async (userId) => {
+    validateObjectId(userId, "userId");
     return await ReturnRequest.find({ userId })
         .populate(
             "orderId",
@@ -124,6 +143,7 @@ export const getMyReturnsService = async (userId) => {
 
 
 export const getSellerReturnsService = async (sellerId) => {
+    validateObjectId(sellerId, "sellerId");
     return await ReturnRequest.find({ sellerId })
         .populate(
             "orderId",
@@ -150,6 +170,9 @@ export const updateReturnStatusService = async (
     returnId,
     status
 ) => {
+    validateObjectId(sellerId, "sellerId");
+    validateObjectId(returnId, "returnId");
+
     const allowedStatuses = [
         "approved",
         "rejected",
@@ -225,6 +248,9 @@ export const processMockRefundService = async (
     sellerId,
     returnId
 ) => {
+    validateObjectId(sellerId, "sellerId");
+    validateObjectId(returnId, "returnId");
+
     const session = await mongoose.startSession();
 
     try {

@@ -2,6 +2,7 @@ import Cart from "../models/Cart.js";
 import Product from "../models/Product.js";
 import ProductVariant from "../models/ProductVariant.js";
 import Inventory from "../models/Inventory.js";
+import { validateObjectId } from "../utils/securityUtils.js";
 
 const getCartWithDetails = async (userId) => {
     const cart = await Cart.findOne({ userId })
@@ -23,6 +24,15 @@ export const addToCartService = async (
     variantId,
     quantity
 ) => {
+    validateObjectId(productId, "productId");
+    validateObjectId(variantId, "variantId");
+
+    if (!Number.isInteger(quantity) || quantity < 1) {
+        const error = new Error("Quantity must be a positive integer");
+        error.statusCode = 400;
+        throw error;
+    }
+
     const product = await Product.findOne({
         _id: productId,
         status: "approved"
@@ -138,6 +148,14 @@ export const updateCartItemService = async (
     itemId,
     quantity
 ) => {
+    validateObjectId(itemId, "itemId");
+
+    if (!Number.isInteger(quantity) || quantity < 1) {
+        const error = new Error("Quantity must be a positive integer");
+        error.statusCode = 400;
+        throw error;
+    }
+
     const cart = await Cart.findOne({ userId });
 
     if (!cart) {
@@ -188,6 +206,7 @@ export const removeCartItemService = async (
     userId,
     itemId
 ) => {
+    validateObjectId(itemId, "itemId");
     const cart = await Cart.findOne({ userId });
 
     if (!cart) {

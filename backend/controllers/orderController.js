@@ -9,7 +9,7 @@ import {
 
 export const checkout = async (req, res, next) => {
     try {
-        const { shippingAddress } = req.body;
+        const { shippingAddress, couponCode } = req.body;
 
         if (!shippingAddress) {
             return res.status(400).json({
@@ -20,7 +20,8 @@ export const checkout = async (req, res, next) => {
 
         const order = await checkoutService(
             req.user.userId,
-            shippingAddress
+            shippingAddress,
+            couponCode
         );
 
         res.status(201).json({

@@ -28,3 +28,29 @@ export const approvedSeller = async (req, res, next) => {
         next(error);
     }
 };
+
+export const sellerOrAdmin = async (req, res, next) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: "Authentication required"
+            });
+        }
+
+        if (req.user.role === "admin") {
+            return next();
+        }
+
+        if (req.user.role === "seller") {
+            return approvedSeller(req, res, next);
+        }
+
+        return res.status(403).json({
+            success: false,
+            message: "You do not have permission to perform this action"
+        });
+    } catch (error) {
+        next(error);
+    }
+};

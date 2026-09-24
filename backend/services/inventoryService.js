@@ -1,8 +1,10 @@
 import Inventory from "../models/Inventory.js";
 import ProductVariant from "../models/ProductVariant.js";
 import Product from "../models/Product.js";
+import { validateObjectId } from "../utils/securityUtils.js";
 
 const verifyVariantOwnership = async (variantId, sellerId) => {
+    validateObjectId(variantId, "variantId");
     const variant = await ProductVariant.findById(variantId);
 
     if (!variant) {
@@ -46,10 +48,34 @@ export const createInventoryService = async (
         throw error;
     }
 
+    if (
+        data.quantity === undefined ||
+        typeof data.quantity !== "number" ||
+        isNaN(data.quantity) ||
+        data.quantity < 0 ||
+        !Number.isInteger(data.quantity)
+    ) {
+        const error = new Error("quantity must be a non-negative integer");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if (
+        data.lowStockThreshold !== undefined &&
+        (typeof data.lowStockThreshold !== "number" ||
+            isNaN(data.lowStockThreshold) ||
+            data.lowStockThreshold < 0 ||
+            !Number.isInteger(data.lowStockThreshold))
+    ) {
+        const error = new Error("lowStockThreshold must be a non-negative integer");
+        error.statusCode = 400;
+        throw error;
+    }
+
     return await Inventory.create({
         variantId,
         quantity: data.quantity,
-        lowStockThreshold: data.lowStockThreshold
+        lowStockThreshold: data.lowStockThreshold || 5
     });
 };
 
@@ -94,6 +120,17 @@ export const updateInventoryService = async (
     }
 
     if (data.quantity !== undefined) {
+        if (
+            typeof data.quantity !== "number" ||
+            isNaN(data.quantity) ||
+            data.quantity < 0 ||
+            !Number.isInteger(data.quantity)
+        ) {
+            const error = new Error("quantity must be a non-negative integer");
+            error.statusCode = 400;
+            throw error;
+        }
+
         if (data.quantity < inventory.reservedQuantity) {
             const error = new Error(
                 "Quantity cannot be less than reserved quantity"
@@ -106,6 +143,17 @@ export const updateInventoryService = async (
     }
 
     if (data.lowStockThreshold !== undefined) {
+        if (
+            typeof data.lowStockThreshold !== "number" ||
+            isNaN(data.lowStockThreshold) ||
+            data.lowStockThreshold < 0 ||
+            !Number.isInteger(data.lowStockThreshold)
+        ) {
+            const error = new Error("lowStockThreshold must be a non-negative integer");
+            error.statusCode = 400;
+            throw error;
+        }
+
         inventory.lowStockThreshold = data.lowStockThreshold;
     }
 

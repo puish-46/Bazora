@@ -4,12 +4,17 @@ import Order from "../models/Order.js";
 import User from "../models/User.js";
 import { createNotificationService } from "./notificationService.js";
 import { notificationTemplates } from "../utils/notificationTemplates.js";
+import { validateObjectId } from "../utils/securityUtils.js";
 
 export const assignDeliveryPartnerService = async (
     orderId,
     sellerOrderId,
     deliveryPartnerId
 ) => {
+    validateObjectId(orderId, "orderId");
+    validateObjectId(sellerOrderId, "sellerOrderId");
+    validateObjectId(deliveryPartnerId, "deliveryPartnerId");
+
     const order = await Order.findById(orderId);
 
     if (!order) {
@@ -88,6 +93,7 @@ export const assignDeliveryPartnerService = async (
 export const getMyDeliveriesService = async (
     deliveryPartnerId
 ) => {
+    validateObjectId(deliveryPartnerId, "deliveryPartnerId");
     return await Delivery.find({
         deliveryPartnerId
     })
@@ -108,6 +114,16 @@ export const updateDeliveryStatusService = async (
     deliveryId,
     status
 ) => {
+    validateObjectId(deliveryPartnerId, "deliveryPartnerId");
+    validateObjectId(deliveryId, "deliveryId");
+
+    const allowedStatuses = ["picked_up", "out_for_delivery", "delivered", "cancelled"];
+    if (!allowedStatuses.includes(status)) {
+        const error = new Error("Invalid delivery status");
+        error.statusCode = 400;
+        throw error;
+    }
+
     const delivery = await Delivery.findOne({
         _id: deliveryId,
         deliveryPartnerId

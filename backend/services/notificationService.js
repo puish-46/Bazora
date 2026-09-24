@@ -1,4 +1,5 @@
 import Notification from "../models/Notification.js";
+import { validateObjectId } from "../utils/securityUtils.js";
 
 
 // ==========================================
@@ -13,6 +14,7 @@ export const createNotificationService = async (
     relatedId = null,
     relatedType = null
 ) => {
+    validateObjectId(userId, "userId");
     return await Notification.create({
         userId,
         type,
@@ -34,6 +36,7 @@ export const getMyNotificationsService = async (
     limit = 20,
     unreadOnly = false
 ) => {
+    validateObjectId(userId, "userId");
     const currentPage = Math.max(
         Number(page),
         1
@@ -105,6 +108,9 @@ export const markNotificationReadService = async (
     userId,
     notificationId
 ) => {
+    validateObjectId(userId, "userId");
+    validateObjectId(notificationId, "notificationId");
+
     const notification =
         await Notification.findOne({
             _id: notificationId,
@@ -133,6 +139,7 @@ export const markNotificationReadService = async (
 
 export const markAllNotificationsReadService =
     async (userId) => {
+        validateObjectId(userId, "userId");
         await Notification.updateMany(
             {
                 userId,
@@ -160,6 +167,9 @@ export const deleteNotificationService = async (
     userId,
     notificationId
 ) => {
+    validateObjectId(userId, "userId");
+    validateObjectId(notificationId, "notificationId");
+
     const notification =
         await Notification.findOne({
             _id: notificationId,

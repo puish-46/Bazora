@@ -1,6 +1,7 @@
 import Product from "../models/Product.js";
 import Store from "../models/Store.js";
 import Category from "../models/Category.js";
+import { escapeRegex, validateObjectId, isValidObjectId } from "../utils/securityUtils.js";
 
 export const createProductService = async (sellerId, data) => {
     const {
@@ -14,6 +15,27 @@ export const createProductService = async (sellerId, data) => {
         basePrice,
         discountPercentage
     } = data;
+
+    validateObjectId(storeId, "storeId");
+    validateObjectId(categoryId, "categoryId");
+
+    if (basePrice === undefined || typeof basePrice !== "number" || isNaN(basePrice) || basePrice < 0) {
+        const error = new Error("basePrice must be a valid non-negative number");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if (
+        discountPercentage !== undefined &&
+        (typeof discountPercentage !== "number" ||
+            isNaN(discountPercentage) ||
+            discountPercentage < 0 ||
+            discountPercentage > 100)
+    ) {
+        const error = new Error("discountPercentage must be a number between 0 and 100");
+        error.statusCode = 400;
+        throw error;
+    }
 
     // 1. Verify that the store belongs to this seller
     const store = await Store.findOne({
@@ -50,7 +72,9 @@ export const createProductService = async (sellerId, data) => {
         throw error;
     }
 
-    // 4. Create product
+    // 4. Create product (sellers can only initiate as draft or pending)
+    const initialStatus = data.status === "pending" ? "pending" : "draft";
+
     return await Product.create({
         sellerId,
         storeId,
@@ -61,8 +85,8 @@ export const createProductService = async (sellerId, data) => {
         brand,
         images,
         basePrice,
-        discountPercentage,
-        status: "draft"
+        discountPercentage: discountPercentage || 0,
+        status: initialStatus
     });
 };
 
@@ -78,6 +102,8 @@ export const getMyProductsService = async (sellerId) => {
 
 
 export const getProductByIdService = async (productId) => {
+    validateObjectId(productId, "productId");
+
     const product = await Product.findById(productId)
         .populate("storeId", "storeName")
         .populate("categoryId", "name");
@@ -97,6 +123,29 @@ export const updateProductService = async (
     productId,
     data
 ) => {
+    validateObjectId(productId, "productId");
+
+    if (
+        data.basePrice !== undefined &&
+        (typeof data.basePrice !== "number" || isNaN(data.basePrice) || data.basePrice < 0)
+    ) {
+        const error = new Error("basePrice must be a valid non-negative number");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if (
+        data.discountPercentage !== undefined &&
+        (typeof data.discountPercentage !== "number" ||
+            isNaN(data.discountPercentage) ||
+            data.discountPercentage < 0 ||
+            data.discountPercentage > 100)
+    ) {
+        const error = new Error("discountPercentage must be a number between 0 and 100");
+        error.statusCode = 400;
+        throw error;
+    }
+
     const product = await Product.findOne({
         _id: productId,
         sellerId
@@ -126,6 +175,10 @@ export const updateProductService = async (
         }
     }
 
+    if (data.status !== undefined && ["draft", "pending", "inactive"].includes(data.status)) {
+        product.status = data.status;
+    }
+
     return await product.save();
 };
 
@@ -134,6 +187,8 @@ export const deleteProductService = async (
     sellerId,
     productId
 ) => {
+    validateObjectId(productId, "productId");
+
     const product = await Product.findOne({
         _id: productId,
         sellerId
@@ -171,24 +226,25 @@ export const searchProductsService = async (queryParams) => {
         status: "approved"
     };
 
-    // Search by product name, description or brand
-    if (search) {
+    // Search by product name, description or brand (safe regex)
+    if (search && typeof search === "string" && search.trim() !== "") {
+        const safeSearch = escapeRegex(search.trim());
         filter.$or = [
-            { name: { $regex: search, $options: "i" } },
-            { description: { $regex: search, $options: "i" } },
-            { brand: { $regex: search, $options: "i" } }
+            { name: { $regex: safeSearch, $options: "i" } },
+            { description: { $regex: safeSearch, $options: "i" } },
+            { brand: { $regex: safeSearch, $options: "i" } }
         ];
     }
 
-    // Category filter
-    if (category) {
-        filter.categoryId = category;
+    // Category filter with ObjectId validation
+    if (category && typeof category === "string" && isValidObjectId(category.trim())) {
+        filter.categoryId = category.trim();
     }
 
-    // Brand filter
-    if (brand) {
+    // Brand filter (safe regex)
+    if (brand && typeof brand === "string" && brand.trim() !== "") {
         filter.brand = {
-            $regex: brand,
+            $regex: escapeRegex(brand.trim()),
             $options: "i"
         };
     }
@@ -197,12 +253,16 @@ export const searchProductsService = async (queryParams) => {
     if (minPrice !== undefined || maxPrice !== undefined) {
         filter.basePrice = {};
 
-        if (minPrice !== undefined) {
+        if (minPrice !== undefined && !isNaN(Number(minPrice)) && Number(minPrice) >= 0) {
             filter.basePrice.$gte = Number(minPrice);
         }
 
-        if (maxPrice !== undefined) {
+        if (maxPrice !== undefined && !isNaN(Number(maxPrice)) && Number(maxPrice) >= 0) {
             filter.basePrice.$lte = Number(maxPrice);
+        }
+
+        if (Object.keys(filter.basePrice).length === 0) {
+            delete filter.basePrice;
         }
     }
 

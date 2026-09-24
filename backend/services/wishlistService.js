@@ -1,7 +1,9 @@
 import Wishlist from "../models/Wishlist.js";
 import Product from "../models/Product.js";
+import { validateObjectId } from "../utils/securityUtils.js";
 
 export const addToWishlistService = async (userId, productId) => {
+    validateObjectId(productId, "productId");
     const product = await Product.findOne({
         _id: productId,
         status: "approved"
@@ -67,6 +69,7 @@ export const removeFromWishlistService = async (
     userId,
     productId
 ) => {
+    validateObjectId(productId, "productId");
     const wishlist = await Wishlist.findOne({ userId });
 
     if (!wishlist) {

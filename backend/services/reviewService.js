@@ -1,6 +1,7 @@
 import Review from "../models/Review.js";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
+import { validateObjectId } from "../utils/securityUtils.js";
 
 
 const verifyDeliveredPurchase = async (
@@ -62,6 +63,10 @@ export const createReviewService = async (
     title,
     comment
 ) => {
+    validateObjectId(productId, "productId");
+    validateObjectId(variantId, "variantId");
+    validateObjectId(orderId, "orderId");
+
     const product = await Product.findOne({
         _id: productId,
         status: "approved"
@@ -123,6 +128,7 @@ export const getProductReviewsService = async (
     page = 1,
     limit = 10
 ) => {
+    validateObjectId(productId, "productId");
     const product = await Product.findOne({
         _id: productId,
         status: "approved"
@@ -201,14 +207,18 @@ export const updateReviewService = async (
     title,
     comment
 ) => {
-    const review = await Review.findOne({
-        _id: reviewId,
-        userId
-    });
+    validateObjectId(reviewId, "reviewId");
+    const review = await Review.findById(reviewId);
 
     if (!review) {
         const error = new Error("Review not found");
         error.statusCode = 404;
+        throw error;
+    }
+
+    if (review.userId.toString() !== userId.toString()) {
+        const error = new Error("You do not have permission to edit this review");
+        error.statusCode = 403;
         throw error;
     }
 
@@ -232,14 +242,18 @@ export const deleteReviewService = async (
     userId,
     reviewId
 ) => {
-    const review = await Review.findOne({
-        _id: reviewId,
-        userId
-    });
+    validateObjectId(reviewId, "reviewId");
+    const review = await Review.findById(reviewId);
 
     if (!review) {
         const error = new Error("Review not found");
         error.statusCode = 404;
+        throw error;
+    }
+
+    if (review.userId.toString() !== userId.toString()) {
+        const error = new Error("You do not have permission to delete this review");
+        error.statusCode = 403;
         throw error;
     }
 

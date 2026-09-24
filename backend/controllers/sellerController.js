@@ -12,6 +12,28 @@ export const applyAsSeller = async (req, res, next) => {
             });
         }
 
+        if (typeof businessName !== "string" || businessName.trim().length < 2 || businessName.trim().length > 100) {
+            return res.status(400).json({
+                success: false,
+                message: "Business name must be between 2 and 100 characters"
+            });
+        }
+
+        const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (typeof businessEmail !== "string" || !EMAIL_REGEX.test(businessEmail.trim())) {
+            return res.status(400).json({
+                success: false,
+                message: "A valid business email is required"
+            });
+        }
+
+        if (typeof phone !== "string" || phone.trim().length < 6 || phone.trim().length > 25) {
+            return res.status(400).json({
+                success: false,
+                message: "Phone number must be between 6 and 25 characters"
+            });
+        }
+
         const existingSeller = await Seller.findOne({
             userId: req.user.userId
         });
@@ -25,9 +47,9 @@ export const applyAsSeller = async (req, res, next) => {
 
         const seller = await Seller.create({
             userId: req.user.userId,
-            businessName,
-            businessEmail,
-            phone
+            businessName: businessName.trim(),
+            businessEmail: businessEmail.trim().toLowerCase(),
+            phone: phone.trim()
         });
 
         res.status(201).json({
@@ -47,10 +69,17 @@ export const createStore = async (req, res, next) => {
     try {
         const { storeName, description, logo, banner } = req.body;
 
-        if (!storeName) {
+        if (!storeName || typeof storeName !== "string" || storeName.trim().length === 0) {
             return res.status(400).json({
                 success: false,
                 message: "Store name is required"
+            });
+        }
+
+        if (storeName.trim().length > 100) {
+            return res.status(400).json({
+                success: false,
+                message: "Store name cannot exceed 100 characters"
             });
         }
 
@@ -67,10 +96,10 @@ export const createStore = async (req, res, next) => {
 
         const store = await Store.create({
             sellerId: req.seller._id,
-            storeName,
-            description,
-            logo,
-            banner
+            storeName: storeName.trim(),
+            description: typeof description === "string" ? description.trim().slice(0, 1000) : "",
+            logo: typeof logo === "string" ? logo.trim().slice(0, 1000) : "",
+            banner: typeof banner === "string" ? banner.trim().slice(0, 1000) : ""
         });
 
         res.status(201).json({
@@ -126,11 +155,37 @@ export const updateMyStore = async (req, res, next) => {
             });
         }
 
-        if (storeName !== undefined) store.storeName = storeName;
-        if (description !== undefined) store.description = description;
-        if (logo !== undefined) store.logo = logo;
-        if (banner !== undefined) store.banner = banner;
-        if (isActive !== undefined) store.isActive = isActive;
+        if (storeName !== undefined) {
+            if (typeof storeName !== "string" || storeName.trim().length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Store name cannot be empty"
+                });
+            }
+            if (storeName.trim().length > 100) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Store name cannot exceed 100 characters"
+                });
+            }
+            store.storeName = storeName.trim();
+        }
+
+        if (description !== undefined) {
+            store.description = typeof description === "string" ? description.trim().slice(0, 1000) : "";
+        }
+
+        if (logo !== undefined) {
+            store.logo = typeof logo === "string" ? logo.trim().slice(0, 1000) : "";
+        }
+
+        if (banner !== undefined) {
+            store.banner = typeof banner === "string" ? banner.trim().slice(0, 1000) : "";
+        }
+
+        if (isActive !== undefined) {
+            store.isActive = Boolean(isActive);
+        }
 
         await store.save();
 

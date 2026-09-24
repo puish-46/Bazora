@@ -3,6 +3,7 @@ import TicketMessage from "../models/TicketMessage.js";
 import User from "../models/User.js";
 import { createNotificationService } from "./notificationService.js";
 import { notificationTemplates } from "../utils/notificationTemplates.js";
+import { validateObjectId } from "../utils/securityUtils.js";
 
 
 export const createTicketService = async (
@@ -13,7 +14,10 @@ export const createTicketService = async (
     priority,
     orderId
 ) => {
+    validateObjectId(userId, "userId");
+
     if (orderId) {
+        validateObjectId(orderId, "orderId");
         const Order = (
             await import("../models/Order.js")
         ).default;
@@ -46,6 +50,7 @@ export const createTicketService = async (
 export const getMyTicketsService = async (
     userId
 ) => {
+    validateObjectId(userId, "userId");
     return await SupportTicket.find({
         userId
     })
@@ -65,6 +70,9 @@ export const getTicketByIdService = async (
     userId,
     ticketId
 ) => {
+    validateObjectId(userId, "userId");
+    validateObjectId(ticketId, "ticketId");
+
     const ticket = await SupportTicket.findOne({
         _id: ticketId,
         userId
@@ -140,6 +148,9 @@ export const assignTicketService = async (
     ticketId,
     supportAgentId
 ) => {
+    validateObjectId(ticketId, "ticketId");
+    validateObjectId(supportAgentId, "supportAgentId");
+
     const agent = await User.findOne({
         _id: supportAgentId,
         role: "support"
@@ -188,6 +199,21 @@ export const addTicketMessageService = async (
     message,
     isSupportAgent
 ) => {
+    validateObjectId(senderId, "senderId");
+    validateObjectId(ticketId, "ticketId");
+
+    if (!message || typeof message !== "string" || message.trim().length === 0) {
+        const error = new Error("Message is required");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if (message.length > 5000) {
+        const error = new Error("Message exceeds maximum length of 5000 characters");
+        error.statusCode = 400;
+        throw error;
+    }
+
     const ticket = await SupportTicket.findById(
         ticketId
     );
@@ -270,6 +296,9 @@ export const updateTicketStatusService = async (
     ticketId,
     status
 ) => {
+    validateObjectId(supportAgentId, "supportAgentId");
+    validateObjectId(ticketId, "ticketId");
+
     const allowedStatuses = [
         "open",
         "in_progress",

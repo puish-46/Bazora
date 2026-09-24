@@ -3,6 +3,7 @@ import Order from "../models/Order.js";
 import Seller from "../models/Seller.js";
 import { createNotificationService } from "./notificationService.js";
 import { notificationTemplates } from "../utils/notificationTemplates.js";
+import { validateObjectId } from "../utils/securityUtils.js";
 
 const COMMISSION_PERCENTAGE = 10;
 
@@ -15,6 +16,9 @@ export const createSettlementService = async (
     orderId,
     sellerOrderId
 ) => {
+    validateObjectId(orderId, "orderId");
+    validateObjectId(sellerOrderId, "sellerOrderId");
+
     const order = await Order.findOne({
         _id: orderId,
         paymentStatus: "paid"
@@ -117,6 +121,8 @@ export const createSettlementService = async (
 export const getSellerEarningsService = async (
     sellerId
 ) => {
+    validateObjectId(sellerId, "sellerId");
+
     const settlements =
         await Settlement.find({
             sellerId
@@ -171,6 +177,8 @@ export const getSellerEarningsService = async (
 export const getSellerSettlementsService = async (
     sellerId
 ) => {
+    validateObjectId(sellerId, "sellerId");
+
     return await Settlement.find({
         sellerId
     })
@@ -194,6 +202,11 @@ export const getAllSettlementsService = async (
     const filter = {};
 
     if (status) {
+        if (!["pending", "paid"].includes(status)) {
+            const error = new Error("Invalid settlement status filter");
+            error.statusCode = 400;
+            throw error;
+        }
         filter.status = status;
     }
 
@@ -220,6 +233,14 @@ export const markSettlementPaidService = async (
     settlementId,
     paymentReference
 ) => {
+    validateObjectId(settlementId, "settlementId");
+
+    if (paymentReference && typeof paymentReference === "string" && paymentReference.length > 100) {
+        const error = new Error("Payment reference cannot exceed 100 characters");
+        error.statusCode = 400;
+        throw error;
+    }
+
     const settlement =
         await Settlement.findById(
             settlementId

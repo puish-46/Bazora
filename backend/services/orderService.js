@@ -7,8 +7,17 @@ import Order from "../models/Order.js";
 import { createNotificationService } from "./notificationService.js";
 import { notificationTemplates } from "../utils/notificationTemplates.js";
 import Coupon from "../models/Coupon.js";
+import { validateObjectId } from "../utils/securityUtils.js";
 
 export const checkoutService = async (userId, shippingAddress, couponCode = null) => {
+    validateObjectId(userId, "userId");
+
+    if (couponCode && typeof couponCode === "string" && couponCode.length > 50) {
+        const error = new Error("Invalid coupon code length");
+        error.statusCode = 400;
+        throw error;
+    }
+
     const session = await mongoose.startSession();
 
     try {
@@ -151,13 +160,103 @@ export const checkoutService = async (userId, shippingAddress, couponCode = null
             const sellerOrders =
                 Array.from(sellerOrderMap.values());
 
+            const cartSubtotal = totalAmount;
+            let appliedCoupon = null;
+            let discountAmount = 0;
+            let finalTotalAmount = cartSubtotal;
+
+            if (couponCode) {
+                const formattedCode = typeof couponCode === "string"
+                    ? couponCode.trim().toUpperCase()
+                    : String(couponCode).toUpperCase();
+
+                if (formattedCode.length > 0) {
+                    const coupon = await Coupon.findOne({
+                        code: formattedCode,
+                        isActive: true
+                    }).session(session);
+
+                    // 1. Coupon exists
+                    if (!coupon) {
+                        const error = new Error("Invalid or inactive coupon");
+                        error.statusCode = 400;
+                        throw error;
+                    }
+
+                    const now = new Date();
+
+                    // 2. Start date
+                    if (now < new Date(coupon.startDate)) {
+                        const error = new Error("Coupon has not started yet");
+                        error.statusCode = 400;
+                        throw error;
+                    }
+
+                    // 3. Expiry date
+                    if (now > new Date(coupon.expiryDate)) {
+                        const error = new Error("Coupon has expired");
+                        error.statusCode = 400;
+                        throw error;
+                    }
+
+                    // 4. Usage limit
+                    if (coupon.usageLimit !== null && coupon.usageLimit !== undefined) {
+                        if (coupon.usedCount >= coupon.usageLimit) {
+                            const error = new Error("Coupon usage limit reached");
+                            error.statusCode = 400;
+                            throw error;
+                        }
+                    }
+
+                    // 5. Minimum order amount
+                    if (coupon.minimumOrderAmount && cartSubtotal < coupon.minimumOrderAmount) {
+                        const error = new Error(
+                            `Minimum order amount of ${coupon.minimumOrderAmount} required for this coupon`
+                        );
+                        error.statusCode = 400;
+                        throw error;
+                    }
+
+                    // 6. Calculate discount
+                    if (coupon.discountType === "percentage") {
+                        let discount = (cartSubtotal * coupon.discountValue) / 100;
+                        if (
+                            coupon.maximumDiscountAmount !== null &&
+                            coupon.maximumDiscountAmount !== undefined &&
+                            coupon.maximumDiscountAmount > 0
+                        ) {
+                            discount = Math.min(discount, coupon.maximumDiscountAmount);
+                        }
+                        discountAmount = discount;
+                    } else if (coupon.discountType === "fixed") {
+                        discountAmount = Math.min(coupon.discountValue, cartSubtotal);
+                    } else {
+                        const error = new Error("Invalid discount configuration");
+                        error.statusCode = 400;
+                        throw error;
+                    }
+
+                    // Round final discount to 2 decimal places
+                    discountAmount = Math.round(discountAmount * 100) / 100;
+
+                    // Ensure discount does not exceed subtotal (never allow negative totalAmount)
+                    discountAmount = Math.min(discountAmount, cartSubtotal);
+
+                    finalTotalAmount = Math.round((cartSubtotal - discountAmount) * 100) / 100;
+                    appliedCoupon = coupon;
+                }
+            }
+
             // 8. Create order
             const orders = await Order.create(
                 [
                     {
                         userId,
                         sellerOrders,
-                        totalAmount,
+                        totalAmount: finalTotalAmount,
+                        couponId: appliedCoupon ? appliedCoupon._id : null,
+                        couponCode: appliedCoupon ? appliedCoupon.code : null,
+                        discountAmount,
                         paymentStatus: "pending",
                         orderStatus: "pending",
                         shippingAddress
@@ -204,6 +303,7 @@ export const checkoutService = async (userId, shippingAddress, couponCode = null
 
 
 export const getMyOrdersService = async (userId) => {
+    validateObjectId(userId, "userId");
     return await Order.find({ userId })
         .populate(
             "sellerOrders.sellerId",
@@ -222,6 +322,9 @@ export const getMyOrdersService = async (userId) => {
 
 
 export const getOrderByIdService = async (userId, orderId) => {
+    validateObjectId(userId, "userId");
+    validateObjectId(orderId, "orderId");
+
     const order = await Order.findOne({
         _id: orderId,
         userId
@@ -249,6 +352,8 @@ export const getOrderByIdService = async (userId, orderId) => {
 };
 
 export const getSellerOrdersService = async (sellerId) => {
+    validateObjectId(sellerId, "sellerId");
+
     const orders = await Order.find({
         "sellerOrders.sellerId": sellerId
     })
@@ -289,6 +394,9 @@ export const updateSellerOrderStatusService = async (
     orderId,
     status
 ) => {
+    validateObjectId(sellerId, "sellerId");
+    validateObjectId(orderId, "orderId");
+
     const allowedStatuses = [
         "processing",
         "shipped",
@@ -438,6 +546,9 @@ export const updateSellerOrderStatusService = async (
 };
 
 export const cancelOrderService = async (userId, orderId) => {
+    validateObjectId(userId, "userId");
+    validateObjectId(orderId, "orderId");
+
     const session = await mongoose.startSession();
 
     try {

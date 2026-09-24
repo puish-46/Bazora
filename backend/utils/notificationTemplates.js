@@ -109,5 +109,41 @@ export const notificationTemplates = {
         message: "Your seller settlement has been paid successfully.",
         relatedId: settlementId,
         relatedType: "Settlement"
+    }),
+
+    productApproved: (productId, productName) => ({
+        type: "seller",
+        title: "Product approved",
+        message: `Your product "${productName}" has been approved and is now live.`,
+        relatedId: productId,
+        relatedType: "Product"
+    }),
+
+    productRejected: (productId, productName, reason) => ({
+        type: "seller",
+        title: "Product rejected",
+        message: reason
+            ? `Your product "${productName}" was rejected: ${reason}`
+            : `Your product "${productName}" was rejected during moderation.`,
+        relatedId: productId,
+        relatedType: "Product"
+    }),
+
+    userRoleUpdated: (newRole) => ({
+        type: "system",
+        title: "Account role updated",
+        message: `Your account role has been updated to ${newRole}.`,
+        relatedId: null,
+        relatedType: null
+    }),
+
+    accountStatusUpdated: (isActive) => ({
+        type: "system",
+        title: isActive ? "Account activated" : "Account deactivated",
+        message: isActive
+            ? "Your account has been activated."
+            : "Your account has been deactivated by an administrator.",
+        relatedId: null,
+        relatedType: null
     })
-};  
+};

@@ -55,6 +55,7 @@ const notificationSchema = new mongoose.Schema(
                 "SupportTicket",
                 "Seller",
                 "Settlement",
+                "Product",
                 null
             ],
             default: null

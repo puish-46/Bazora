@@ -1,10 +1,15 @@
 import mongoose from "mongoose";
 import Order from "../models/Order.js";
 import Inventory from "../models/Inventory.js";
+import Coupon from "../models/Coupon.js";
 import { createNotificationService } from "./notificationService.js";
 import { notificationTemplates } from "../utils/notificationTemplates.js";
+import { validateObjectId } from "../utils/securityUtils.js";
 
 export const processMockPaymentService = async (userId, orderId) => {
+    validateObjectId(userId, "userId");
+    validateObjectId(orderId, "orderId");
+
     const session = await mongoose.startSession();
 
     try {
@@ -62,6 +67,40 @@ export const processMockPaymentService = async (userId, orderId) => {
                         error.statusCode = 400;
                         throw error;
                     }
+                }
+            }
+
+            if (order.couponId) {
+                const coupon = await Coupon.findOneAndUpdate(
+                    {
+                        _id: order.couponId,
+                        isActive: true,
+                        $or: [
+                            { usageLimit: null },
+                            {
+                                $expr: {
+                                    $lt: ["$usedCount", "$usageLimit"]
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        $inc: {
+                            usedCount: 1
+                        }
+                    },
+                    {
+                        new: true,
+                        session
+                    }
+                );
+
+                if (!coupon) {
+                    const error = new Error(
+                        "Coupon is no longer available or usage limit reached"
+                    );
+                    error.statusCode = 400;
+                    throw error;
                 }
             }
 

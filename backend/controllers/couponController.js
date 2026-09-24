@@ -15,7 +15,7 @@ import {
 export const createCoupon = async (req, res, next) => {
     try {
         const coupon =
-            await createCouponService(req.body);
+            await createCouponService(req.body, req.user?.userId);
 
         res.status(201).json({
             success: true,
@@ -77,7 +77,8 @@ export const updateCoupon = async (req, res, next) => {
         const coupon =
             await updateCouponService(
                 req.params.couponId,
-                req.body
+                req.body,
+                req.user?.userId
             );
 
         res.status(200).json({
@@ -99,7 +100,8 @@ export const deleteCoupon = async (req, res, next) => {
     try {
         const result =
             await deleteCouponService(
-                req.params.couponId
+                req.params.couponId,
+                req.user?.userId
             );
 
         res.status(200).json({
@@ -124,7 +126,8 @@ export const toggleCouponStatus = async (
     try {
         const coupon =
             await toggleCouponStatusService(
-                req.params.couponId
+                req.params.couponId,
+                req.user?.userId
             );
 
         res.status(200).json({

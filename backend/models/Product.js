@@ -83,6 +83,13 @@ const productSchema = new mongoose.Schema(
             ],
             default: "draft",
             index: true
+        },
+
+        rejectionReason: {
+            type: String,
+            default: null,
+            trim: true,
+            maxlength: 1000
         }
     },
     {
