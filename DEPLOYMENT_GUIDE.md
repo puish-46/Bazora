@@ -240,6 +240,6 @@ Once both services are deployed and connected, test the live platform on your Ve
 * [ ] Live Vercel website URL obtained.
 
 ### Submission Links
-* **GitHub Repository**: `https://github.com/<your-username>/<your-repo-name>`
-* **Live Website (Vercel)**: `https://<your-project>.vercel.app`
-* **Live Backend API (Render)**: `https://<your-service>.onrender.com`
+* **GitHub Repository**: `https://github.com/puish-46/Bazora`
+* **Live Website (Vercel)**: `https://bazora-lovat.vercel.app`
+* **Live Backend API (Render)**: `https://bazora.onrender.com`

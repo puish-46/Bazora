@@ -3,13 +3,21 @@ import express from "express";
 import {
     createInventory,
     getInventory,
-    updateInventory
+    updateInventory,
+    getMyInventory
 } from "../controllers/inventoryController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
 import { approvedSeller } from "../middleware/sellerMiddleware.js";
 
 const router = express.Router();
+
+router.get(
+    "/inventory/my",
+    protect,
+    approvedSeller,
+    getMyInventory
+);
 
 router.post(
     "/variants/:variantId/inventory",

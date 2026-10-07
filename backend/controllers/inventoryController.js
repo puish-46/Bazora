@@ -1,7 +1,8 @@
 import {
     createInventoryService,
     getInventoryService,
-    updateInventoryService
+    updateInventoryService,
+    getMyInventoryService
 } from "../services/inventoryService.js";
 
 export const createInventory = async (req, res, next) => {
@@ -63,6 +64,21 @@ export const updateInventory = async (req, res, next) => {
             success: true,
             message: "Inventory updated successfully",
             inventory
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getMyInventory = async (req, res, next) => {
+    try {
+        const items = await getMyInventoryService(req.seller._id);
+
+        res.status(200).json({
+            success: true,
+            count: items.length,
+            items,
+            inventory: items
         });
     } catch (error) {
         next(error);

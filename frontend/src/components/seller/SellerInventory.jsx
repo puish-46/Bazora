@@ -22,49 +22,12 @@ export default function SellerInventory({ accountStatus }) {
     setLoading(true);
     setError(null);
     try {
-      // 1. Fetch seller's products
-      const prodRes = await api.get("/products/my");
-      const products = Array.isArray(prodRes?.products) ? prodRes.products : [];
-
-      // 2. Fetch variants for each product
-      const inventoryRows = [];
-
-      for (const product of products) {
-        try {
-          const varRes = await api.get(`/products/${product._id}/variants`);
-          const variants = Array.isArray(varRes?.variants) ? varRes.variants : [];
-
-          for (const variant of variants) {
-            let inv = null;
-            try {
-              const invRes = await api.get(`/variants/${variant._id}/inventory`);
-              if (invRes && invRes.inventory) {
-                inv = invRes.inventory;
-              }
-            } catch (invErr) {
-              // 404 is normal if inventory record hasn't been initialized yet
-            }
-
-            inventoryRows.push({
-              productId: product._id,
-              productName: product.name,
-              productImage: product.images?.[0] || null,
-              variantId: variant._id,
-              sku: variant.sku,
-              attributes: variant.attributes || {},
-              price: variant.price,
-              isActive: variant.isActive,
-              inventoryId: inv?._id || null,
-              quantity: inv?.quantity !== undefined ? inv.quantity : null,
-              reservedQuantity: inv?.reservedQuantity || 0,
-              lowStockThreshold: inv?.lowStockThreshold || 5,
-            });
-          }
-        } catch (vErr) {
-          console.error(`Failed to fetch variants for product ${product._id}:`, vErr);
-        }
-      }
-
+      const res = await api.get("/inventory/my");
+      const inventoryRows = Array.isArray(res?.items)
+        ? res.items
+        : Array.isArray(res?.inventory)
+        ? res.inventory
+        : [];
       setItems(inventoryRows);
     } catch (err) {
       console.error("Failed to load inventory:", err);

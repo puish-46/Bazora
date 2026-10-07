@@ -159,7 +159,7 @@ export default function SellerProductModal({
             <p className="seller-modal-subtitle">
               {isEditing
                 ? "Update pricing, descriptions, and catalog status"
-                : "List a new product under your verified vendor storefront"}
+                : "List a new product under your storefront. You will be guided to add variants and initial stock."}
             </p>
           </div>
           <button
@@ -337,7 +337,7 @@ export default function SellerProductModal({
                 ? "Submitting..."
                 : isEditing
                 ? "Update Product"
-                : "Submit Product for Approval"}
+                : "Create Product & Add Variants"}
             </button>
           </div>
         </form>

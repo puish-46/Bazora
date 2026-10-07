@@ -328,8 +328,11 @@ export default function SellerProducts({ store, accountStatus, onStoreRequested 
           categories={categories}
           onClose={() => setIsCreatingProduct(false)}
           onSaved={(newProd) => {
-            setSuccessMsg(`Product "${newProd.name}" created successfully!`);
+            setSuccessMsg(`Product "${newProd.name}" created! Add your first variant and initial stock below.`);
             fetchProductsAndCategories();
+            if (newProd && newProd._id) {
+              setActiveProductForVariants(newProd);
+            }
           }}
         />
       )}

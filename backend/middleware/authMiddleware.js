@@ -71,3 +71,38 @@ export const authorize = (...allowedRoles) => {
         next();
     };
 };
+
+export const optionalAuth = (req, res, next) => {
+    try {
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return next();
+        }
+
+        const token = authHeader.split(" ")[1];
+
+        if (!token || token.trim() === "" || token === "null" || token === "undefined") {
+            return next();
+        }
+
+        if (!process.env.JWT_SECRET) {
+            return next();
+        }
+
+        const decoded = jwt.verify(
+            token,
+            process.env.JWT_SECRET
+        );
+
+        if (decoded && decoded.userId) {
+            req.user = decoded;
+        }
+
+        next();
+
+    } catch (error) {
+        // Silently continue as unauthenticated guest for expired or malformed tokens
+        next();
+    }
+};

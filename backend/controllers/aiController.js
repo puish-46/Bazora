@@ -1,7 +1,9 @@
 import {
     generateProductDescriptionService,
     generateSellingPointsService,
-    generateReviewSummaryService
+    generateReviewSummaryService,
+    generateProductSummaryService,
+    chatAssistantService
 } from "../services/aiService.js";
 
 // ==========================================
@@ -95,6 +97,62 @@ export const getReviewSummary = async (req, res, next) => {
             success: true,
             ...result
         });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// ==========================================
+// GET PRODUCT SUMMARY
+// ==========================================
+
+export const getProductSummary = async (req, res, next) => {
+    try {
+        const { productId } = req.params;
+
+        const result = await generateProductSummaryService(productId);
+
+        res.status(200).json({
+            success: true,
+            ...result
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// ==========================================
+// BAZORA AI SHOPPING ASSISTANT
+// ==========================================
+
+export const chatAssistant = async (req, res, next) => {
+    try {
+        const { message, history, conversationHistory } = req.body;
+
+        if (!message || typeof message !== "string" || message.trim().length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "A shopping question or search query is required"
+            });
+        }
+
+        if (message.trim().length > 1000) {
+            return res.status(400).json({
+                success: false,
+                message: "Message cannot exceed 1000 characters"
+            });
+        }
+
+        const rawHistory = Array.isArray(history)
+            ? history
+            : (Array.isArray(conversationHistory) ? conversationHistory : []);
+
+        const result = await chatAssistantService({
+            message: message.trim(),
+            conversationHistory: rawHistory
+        });
+
+        res.status(200).json(result);
     } catch (error) {
         next(error);
     }

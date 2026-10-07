@@ -7,7 +7,7 @@ import {
     deleteVariant
 } from "../controllers/variantController.js";
 
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, optionalAuth } from "../middleware/authMiddleware.js";
 import { approvedSeller } from "../middleware/sellerMiddleware.js";
 
 const router = express.Router();
@@ -21,8 +21,7 @@ router.post(
 
 router.get(
     "/products/:productId/variants",
-    protect,
-    approvedSeller,
+    optionalAuth,
     getProductVariants
 );
 

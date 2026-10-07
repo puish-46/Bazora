@@ -130,6 +130,13 @@ export function CustomerDashboard() {
             >
               ❤️ My Wishlist
             </button>
+            <button
+              type="button"
+              className="tag-available action-btn"
+              onClick={() => navigate("/become-seller")}
+            >
+              🏪 Become a Seller
+            </button>
           </div>
         </div>
       </div>

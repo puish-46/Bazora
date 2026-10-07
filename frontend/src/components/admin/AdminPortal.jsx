@@ -3,6 +3,7 @@ import { useNavigation } from "../../context/NavigationContext.jsx";
 import AdminOverview from "./AdminOverview.jsx";
 import AdminUsers from "./AdminUsers.jsx";
 import AdminSellers from "./AdminSellers.jsx";
+import AdminCategories from "./AdminCategories.jsx";
 import AdminProducts from "./AdminProducts.jsx";
 import AdminOrders from "./AdminOrders.jsx";
 import AdminReports from "./AdminReports.jsx";
@@ -26,6 +27,8 @@ export default function AdminPortal() {
     activeTab = "users";
   } else if (currentPath.startsWith("/admin/sellers")) {
     activeTab = "sellers";
+  } else if (currentPath.startsWith("/admin/categories")) {
+    activeTab = "categories";
   } else if (currentPath.startsWith("/admin/products")) {
     activeTab = "products";
   } else if (currentPath.startsWith("/admin/orders")) {
@@ -44,6 +47,8 @@ export default function AdminPortal() {
         return <AdminUsers />;
       case "sellers":
         return <AdminSellers />;
+      case "categories":
+        return <AdminCategories />;
       case "products":
         return <AdminProducts />;
       case "orders":
@@ -108,6 +113,13 @@ export default function AdminPortal() {
             onClick={() => navigate("/admin/sellers")}
           >
             🏪 Sellers
+          </button>
+          <button
+            type="button"
+            className={`admin-tab-link ${activeTab === "categories" ? "active" : ""}`}
+            onClick={() => navigate("/admin/categories")}
+          >
+            🏷️ Categories
           </button>
           <button
             type="button"

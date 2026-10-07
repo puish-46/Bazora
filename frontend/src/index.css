@@ -1,100 +1,171 @@
+/* ==========================================================================
+   Bazora Design System Foundation
+   Direction: Light theme, clean, minimal, premium, spacious
+   Inspiration: Obsidian graph view aesthetic (subtle nodes, hairlines, crisp canvas)
+   ========================================================================== */
+
 :root {
-  --primary: #6366f1;
-  --primary-hover: #4f46e5;
-  --primary-glow: rgba(99, 102, 241, 0.25);
+  /* --------------------------------------------------------------------------
+     1. Brand & Core Color Palette (Obsidian-inspired Slate & Technical Accents)
+     -------------------------------------------------------------------------- */
+  --primary: #0f172a;
+  --primary-hover: #1e293b;
+  --primary-active: #020617;
+  --primary-glow: rgba(15, 23, 42, 0.06);
+  --primary-text: #ffffff;
   
-  --bg-page: #f8fafc;
+  /* Graph View Identity Tokens */
+  --graph-node: #6366f1;
+  --graph-node-muted: #94a3b8;
+  --graph-node-subtle: rgba(99, 102, 241, 0.08);
+  --graph-line: rgba(15, 23, 42, 0.04);
+  --graph-line-active: rgba(99, 102, 241, 0.25);
+  
+  /* --------------------------------------------------------------------------
+     2. Surface & Background Colors (Crisp White & Off-White Canvas)
+     -------------------------------------------------------------------------- */
+  --bg-page: #fafbfc;
   --bg-surface: #ffffff;
   --bg-surface-elevated: #ffffff;
-  --border-subtle: #e2e8f0;
-  --border-strong: #cbd5e1;
+  --bg-subtle: #f1f5f9;
+  --bg-subtle-hover: #e2e8f0;
+  --bg-muted: #f8fafc;
+  
+  /* Reusable Obsidian Graph View Background Pattern */
+  --bg-graph-pattern: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%230f172a' stroke-width='0.75' stroke-opacity='0.035'%3E%3Cpath d='M15 15l80 20M95 35l-50 55M45 90l60 10M15 15l30 75M95 35l15 65'/%3E%3C/g%3E%3Cg fill='%236366f1' fill-opacity='0.1'%3E%3Ccircle cx='15' cy='15' r='2'/%3E%3Ccircle cx='95' cy='35' r='2.5'/%3E%3Ccircle cx='45' cy='90' r='2'/%3E%3Ccircle cx='110' cy='100' r='1.5'/%3E%3C/g%3E%3Cg fill='%230f172a' fill-opacity='0.03'%3E%3Ccircle cx='60' cy='55' r='1.25'/%3E%3Ccircle cx='25' cy='60' r='1'/%3E%3C/g%3E%3C/svg%3E");
+
+  /* --------------------------------------------------------------------------
+     3. Border System (Subtle, Clean Hairlines)
+     -------------------------------------------------------------------------- */
+  --border-subtle: #eef1f6;
+  --border-strong: #e2e8f0;
+  --border-interactive: #cbd5e1;
+  --border-focus: #0f172a;
+  
+  /* --------------------------------------------------------------------------
+     4. Typography & Readability (High-Contrast, Calm Slate Hierarchy)
+     -------------------------------------------------------------------------- */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   
   --text-main: #0f172a;
+  --text-secondary: #334155;
   --text-muted: #64748b;
+  --text-subtle: #94a3b8;
   --text-inverse: #ffffff;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.85rem;
+  --text-base: 0.95rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.04em;
+  --tracking-wider: 0.08em;
   
-  --color-danger: #ef4444;
+  /* --------------------------------------------------------------------------
+     5. Border Radius Conventions (Crisp & Modern)
+     -------------------------------------------------------------------------- */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+  
+  /* --------------------------------------------------------------------------
+     6. Soft Ambient Shadows (Diffused, Low-Opacity)
+     -------------------------------------------------------------------------- */
+  --shadow-subtle: 0 1px 2px 0 rgba(15, 23, 42, 0.03);
+  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.04), 0 2px 4px -2px rgba(15, 23, 42, 0.03);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.04), 0 4px 6px -4px rgba(15, 23, 42, 0.02);
+  --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.05), 0 8px 10px -6px rgba(15, 23, 42, 0.02);
+  --shadow-node: 0 0 0 1px var(--border-subtle), 0 2px 8px -2px rgba(15, 23, 42, 0.04);
+
+  /* --------------------------------------------------------------------------
+     7. Spacing Hierarchy (Spacious & Clean)
+     -------------------------------------------------------------------------- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* --------------------------------------------------------------------------
+     8. Motion & Restrained Transitions
+     -------------------------------------------------------------------------- */
+  --transition-fast: 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-base: 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-smooth: 300ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* --------------------------------------------------------------------------
+     9. Feedback & Status Colors (Calm, Readable, Non-Flashy)
+     -------------------------------------------------------------------------- */
+  --color-danger: #dc2626;
   --color-danger-bg: #fef2f2;
   --color-danger-border: #fecaca;
   
-  --color-success: #10b981;
-  --color-success-bg: #ecfdf5;
-  --color-success-border: #a7f3d0;
+  --color-success: #16a34a;
+  --color-success-bg: #f0fdf4;
+  --color-success-border: #bbf7d0;
   
-  --color-warning: #f59e0b;
+  --color-warning: #d97706;
   --color-warning-bg: #fffbeb;
   --color-warning-border: #fde68a;
 
-  --role-customer: #0284c7;
-  --role-customer-bg: #e0f2fe;
-  --role-seller: #d97706;
-  --role-seller-bg: #fef3c7;
-  --role-admin: #7c3aed;
-  --role-admin-bg: #ede9fe;
-  --role-support: #0d9488;
-  --role-support-bg: #ccfbf1;
-  --role-delivery: #4f46e5;
-  --role-delivery-bg: #e0e7ff;
-  
-  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-full: 9999px;
-  
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --color-info: #0284c7;
+  --color-info-bg: #f0f9ff;
+  --color-info-border: #bae6fd;
+
+  --role-customer: #0369a1;
+  --role-customer-bg: #f0f9ff;
+  --role-seller: #b45309;
+  --role-seller-bg: #fffbeb;
+  --role-admin: #6d28d9;
+  --role-admin-bg: #f5f3ff;
+  --role-support: #0f766e;
+  --role-support-bg: #f0fdfa;
+  --role-delivery: #4338ca;
+  --role-delivery-bg: #eef2ff;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-page: #0b0f19;
-    --bg-surface: #111827;
-    --bg-surface-elevated: #1f2937;
-    --border-subtle: #1f2937;
-    --border-strong: #374151;
-    
-    --text-main: #f9fafb;
-    --text-muted: #9ca3af;
-    --text-inverse: #0b0f19;
-    
-    --color-danger-bg: rgba(239, 68, 68, 0.15);
-    --color-danger-border: rgba(239, 68, 68, 0.4);
-    
-    --color-success-bg: rgba(16, 185, 129, 0.15);
-    --color-success-border: rgba(16, 185, 129, 0.4);
-    
-    --color-warning-bg: rgba(245, 158, 11, 0.15);
-    --color-warning-border: rgba(245, 158, 11, 0.4);
-
-    --role-customer-bg: rgba(2, 132, 199, 0.2);
-    --role-seller-bg: rgba(217, 119, 6, 0.2);
-    --role-admin-bg: rgba(124, 58, 237, 0.25);
-    --role-support-bg: rgba(13, 148, 136, 0.2);
-    --role-delivery-bg: rgba(79, 70, 229, 0.2);
-    
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
-  }
-}
-
+/* ==========================================================================
+   Document & Reset Foundation
+   ========================================================================== */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-page);
+  background-image: var(--bg-graph-pattern);
+  background-repeat: repeat;
+  background-attachment: fixed;
   color: var(--text-main);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
@@ -107,15 +178,109 @@ body {
 }
 
 a {
-  color: var(--primary);
+  color: var(--text-main);
   text-decoration: none;
+  transition: color var(--transition-fast);
 }
 
 a:hover {
-  text-decoration: underline;
+  color: var(--primary-hover);
 }
 
 button {
   font-family: inherit;
   cursor: pointer;
+  border: none;
+  outline: none;
+  background: none;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* ==========================================================================
+   Reusable Graph-Inspired Visual Utility Classes
+   ========================================================================== */
+
+/* Subtle Graph Background Container */
+.graph-canvas-bg {
+  background-color: var(--bg-page);
+  background-image: var(--bg-graph-pattern);
+  background-repeat: repeat;
+}
+
+/* Subtle Graph Node Pip (tiny dot indicator) */
+.graph-node-pip {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background-color: var(--graph-node);
+  box-shadow: 0 0 0 3px var(--graph-node-subtle);
+  flex-shrink: 0;
+}
+
+.graph-node-pip.muted {
+  background-color: var(--graph-node-muted);
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.15);
+}
+
+.graph-node-pip.success {
+  background-color: var(--color-success);
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
+}
+
+/* Technical Minimal Badge */
+.graph-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+/* Technical Card Shell */
+.graph-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.graph-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+/* Technical Connecting Hairline with Node Pip */
+.graph-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: var(--space-4) 0;
+}
+
+.graph-divider::before,
+.graph-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.graph-divider-pip {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-full);
+  background-color: var(--border-interactive);
+  margin: 0 var(--space-3);
 }

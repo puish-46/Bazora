@@ -159,3 +159,87 @@ export const updateInventoryService = async (
 
     return await inventory.save();
 };
+
+export const getMyInventoryService = async (sellerId) => {
+    validateObjectId(sellerId, "sellerId");
+
+    // 1. Fetch all products owned by this seller
+    const products = await Product.find({ sellerId })
+        .select("_id name images status basePrice")
+        .lean();
+
+    if (!products.length) {
+        return [];
+    }
+
+    const productMap = new Map();
+    const productIds = [];
+    for (const p of products) {
+        productMap.set(p._id.toString(), p);
+        productIds.push(p._id);
+    }
+
+    // 2. Fetch all variants belonging to these products in bulk
+    const variants = await ProductVariant.find({
+        productId: { $in: productIds }
+    })
+        .sort({ createdAt: -1 })
+        .lean();
+
+    if (!variants.length) {
+        return [];
+    }
+
+    const variantIds = variants.map((v) => v._id);
+
+    // 3. Fetch all inventory records for these variants in bulk
+    const inventories = await Inventory.find({
+        variantId: { $in: variantIds }
+    }).lean();
+
+    const inventoryMap = new Map();
+    for (const inv of inventories) {
+        inventoryMap.set(inv.variantId.toString(), inv);
+    }
+
+    // 4. Combine into standardized inventory rows
+    return variants.map((v) => {
+        const product = productMap.get(v.productId.toString());
+        const inv = inventoryMap.get(v._id.toString());
+
+        const hasInv = Boolean(inv);
+        const quantity = hasInv ? inv.quantity : null;
+        const reservedQuantity = hasInv ? (inv.reservedQuantity || 0) : 0;
+        const lowStockThreshold = hasInv ? (inv.lowStockThreshold || 5) : 5;
+        const availableQuantity = hasInv
+            ? Math.max(0, inv.quantity - (inv.reservedQuantity || 0))
+            : 0;
+
+        let attributesObj = {};
+        if (v.attributes) {
+            if (v.attributes instanceof Map) {
+                attributesObj = Object.fromEntries(v.attributes);
+            } else if (typeof v.attributes === "object") {
+                attributesObj = v.attributes;
+            }
+        }
+
+        return {
+            productId: product?._id || v.productId,
+            productName: product?.name || "Product",
+            productImage: product?.images?.[0] || null,
+            productStatus: product?.status || "draft",
+            variantId: v._id,
+            sku: v.sku,
+            attributes: attributesObj,
+            price: v.price,
+            isActive: v.isActive,
+            inventoryId: inv?._id || null,
+            quantity,
+            reservedQuantity,
+            lowStockThreshold,
+            availableQuantity,
+            stock: availableQuantity
+        };
+    });
+};

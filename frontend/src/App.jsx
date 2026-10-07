@@ -15,6 +15,8 @@ import OrderConfirmation from "./components/OrderConfirmation.jsx";
 import OrderHistory from "./components/OrderHistory.jsx";
 import SellerPortal from "./components/seller/SellerPortal.jsx";
 import AdminPortal from "./components/admin/AdminPortal.jsx";
+import BecomeSeller from "./components/BecomeSeller.jsx";
+import AiAssistant from "./components/AiAssistant.jsx";
 import {
   CustomerDashboard,
   SellerDashboard,
@@ -64,7 +66,7 @@ function AppRoutes() {
     );
   }
 
-  // Handle all Admin Portal routes: /admin, /admin/dashboard, /admin/users, /admin/sellers, /admin/products, /admin/orders, /admin/reports, /admin/audit-logs
+  // Handle all Admin Portal routes: /admin, /admin/dashboard, /admin/users, /admin/sellers, /admin/categories, /admin/products, /admin/orders, /admin/reports, /admin/audit-logs
   if (currentPath === "/admin" || currentPath.startsWith("/admin/")) {
     return (
       <ProtectedRoute allowedRoles={["admin"]}>
@@ -80,6 +82,13 @@ function AppRoutes() {
 
     case "/products":
       return <ProductList />;
+
+    case "/assistant":
+      return (
+        <ProtectedRoute allowedRoles={["customer", "seller", "admin", "support", "delivery"]}>
+          <AiAssistant />
+        </ProtectedRoute>
+      );
 
     case "/wishlist":
       return (
@@ -109,6 +118,13 @@ function AppRoutes() {
         </ProtectedRoute>
       );
 
+    case "/become-seller":
+      return (
+        <ProtectedRoute allowedRoles={["customer"]}>
+          <BecomeSeller />
+        </ProtectedRoute>
+      );
+
     case "/login":
       return <Login />;
 
@@ -123,6 +139,27 @@ function AppRoutes() {
         return (
           <ProtectedRoute allowedRoles={["admin"]}>
             <AdminPortal />
+          </ProtectedRoute>
+        );
+      }
+      if (user?.role === "seller") {
+        return (
+          <ProtectedRoute allowedRoles={["seller"]}>
+            <SellerPortal />
+          </ProtectedRoute>
+        );
+      }
+      if (user?.role === "support") {
+        return (
+          <ProtectedRoute allowedRoles={["support", "admin"]}>
+            <SupportDashboard />
+          </ProtectedRoute>
+        );
+      }
+      if (user?.role === "delivery") {
+        return (
+          <ProtectedRoute allowedRoles={["delivery", "admin"]}>
+            <DeliveryDashboard />
           </ProtectedRoute>
         );
       }
@@ -157,13 +194,15 @@ export default function App() {
       <AuthProvider>
         <ShopProvider>
           <div className="bazora-app">
+            <div className="bazora-main-wrapper">
+              <main className="main-content">
+                <AppRoutes />
+              </main>
+              <footer className="bazora-footer">
+                <p>© {new Date().getFullYear()} Bazora Multi-Vendor Marketplace. All rights reserved.</p>
+              </footer>
+            </div>
             <Navbar />
-            <main className="main-content">
-              <AppRoutes />
-            </main>
-            <footer className="bazora-footer">
-              <p>© {new Date().getFullYear()} Bazora Multi-Vendor Marketplace. All rights reserved.</p>
-            </footer>
           </div>
         </ShopProvider>
       </AuthProvider>

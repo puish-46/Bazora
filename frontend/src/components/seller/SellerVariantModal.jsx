@@ -11,6 +11,7 @@ export default function SellerVariantModal({ product, onClose, onVariantsChanged
   const [isAdding, setIsAdding] = useState(false);
   const [sku, setSku] = useState("");
   const [price, setPrice] = useState(product?.basePrice || "");
+  const [quantity, setQuantity] = useState("");
   const [attrKey, setAttrKey] = useState("size");
   const [attrVal, setAttrVal] = useState("");
   const [additionalAttrs, setAdditionalAttrs] = useState([]); // [{ key: '', val: '' }]
@@ -27,8 +28,12 @@ export default function SellerVariantModal({ product, onClose, onVariantsChanged
       const res = await api.get(`/products/${product._id}/variants`);
       if (res && Array.isArray(res.variants)) {
         setVariants(res.variants);
+        if (res.variants.length === 0) {
+          setIsAdding(true);
+        }
       } else {
         setVariants([]);
+        setIsAdding(true);
       }
     } catch (err) {
       console.error("Failed to fetch product variants:", err);
@@ -72,6 +77,16 @@ export default function SellerVariantModal({ product, onClose, onVariantsChanged
       return;
     }
 
+    let qty = 0;
+    if (quantity !== undefined && quantity !== null && String(quantity).trim() !== "") {
+      const parsedQty = Number(quantity);
+      if (!Number.isInteger(parsedQty) || parsedQty < 0) {
+        setError("Initial stock must be a non-negative whole number (e.g. 0, 10, 50).");
+        return;
+      }
+      qty = parsedQty;
+    }
+
     // Build attributes object
     const attributes = {};
     if (attrKey.trim() && attrVal.trim()) {
@@ -95,6 +110,7 @@ export default function SellerVariantModal({ product, onClose, onVariantsChanged
         price: priceNum,
         attributes,
         images,
+        quantity: qty,
       });
 
       if (res && res.variant) {
@@ -102,6 +118,7 @@ export default function SellerVariantModal({ product, onClose, onVariantsChanged
         // Reset form
         setSku("");
         setAttrVal("");
+        setQuantity("");
         setAdditionalAttrs([]);
         setImageUrls("");
         setIsAdding(false);
@@ -226,6 +243,30 @@ export default function SellerVariantModal({ product, onClose, onVariantsChanged
 
             <div className="form-row-2">
               <div className="form-group">
+                <label htmlFor="var-stock">
+                  Initial Stock
+                </label>
+                <input
+                  id="var-stock"
+                  type="number"
+                  min="0"
+                  step="1"
+                  placeholder="0 (leave empty for 0)"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  disabled={submitting}
+                />
+              </div>
+
+              <div className="form-group" style={{ display: "flex", alignItems: "center", paddingTop: "1.25rem" }}>
+                <span className="text-muted" style={{ fontSize: "0.82rem" }}>
+                  📦 Inventory is automatically created with this starting quantity (defaults to 0).
+                </span>
+              </div>
+            </div>
+
+            <div className="form-row-2">
+              <div className="form-group">
                 <label htmlFor="attr-k">Attribute Name</label>
                 <input
                   id="attr-k"
@@ -333,6 +374,7 @@ export default function SellerVariantModal({ product, onClose, onVariantsChanged
                   <th>SKU</th>
                   <th>Attributes</th>
                   <th>Price</th>
+                  <th>Stock</th>
                   <th>Active</th>
                   <th>Actions</th>
                 </tr>
@@ -340,6 +382,7 @@ export default function SellerVariantModal({ product, onClose, onVariantsChanged
               <tbody>
                 {variants.map((v) => {
                   const attrs = v.attributes ? Object.entries(v.attributes) : [];
+                  const stockCount = v.stock !== undefined ? v.stock : (v.availableQuantity !== undefined ? v.availableQuantity : 0);
                   return (
                     <tr key={v._id}>
                       <td className="mono">
@@ -356,6 +399,11 @@ export default function SellerVariantModal({ product, onClose, onVariantsChanged
                       </td>
                       <td>
                         <strong>${Number(v.price).toFixed(2)}</strong>
+                      </td>
+                      <td>
+                        <span className={`status-pill small ${stockCount > 0 ? "confirmed" : "pending"}`}>
+                          {stockCount}
+                        </span>
                       </td>
                       <td>
                         <span className={`status-pill small ${v.isActive ? "confirmed" : "failed"}`}>
